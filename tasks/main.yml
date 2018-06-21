@@ -70,6 +70,10 @@
   include_tasks: client.yml
   when: samba_flavor == 'client'
 
+- name: configure sysvol sync
+  include_tasks: sysvol_sync.yml
+  when: samba_sysvol_sync is defined and samba_sysvol_sync and (samba_flavor == 'master' or samba_flavor == 'replica')
+
 - name: refresh kerberos key
   shell: echo {{samba_admin_pass}} | kinit administrator@{{samba_realm|upper}}
   changed_when: false
