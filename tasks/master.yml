@@ -67,12 +67,8 @@
   when: res.stat.exists == False
 
 - name: remove all resolve.conf on interfaces
-  block:
-    - shell: find /etc/net/ifaces/ -name 'resolv.conf'
-      register: res
-      changed_when: false
-    - file: path="{{item}}" state=absent
-      with_items: "{{res.stdout_lines}}"
+  shell: >
+    if [ -d /etc/net/ifaces ]; then find /etc/net/ifaces -name 'resolv.conf' -delete; fi
 
 - name: enable samba service
   service:

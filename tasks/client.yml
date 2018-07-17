@@ -24,6 +24,12 @@
   when: nm_conf_is.changed == false
   notify: restart networkmanager
 
+- name: create /etc/net/ifaces/eth0
+  file:
+    path: /etc/net/ifaces/eth0
+    state: directory
+    mode: 0755
+
 - name: enable eth0
   lineinfile:
     path: /etc/net/ifaces/eth0/options
@@ -31,6 +37,7 @@
     line: 'DISABLED=no'
     backrefs: yes
     state: present
+    create: true
   register: net_conf_is
   changed_when: net_conf_is.changed
   notify: restart network
