@@ -5,6 +5,9 @@
     when: item not in vars
     with_items: "{{ samba_dc_required_vars }}"
 
+  - name: install openresolv and etcnet
+    apt_rpm: pkg=openresolv,etcnet state=present
+
   - name: install samba DC common packages
     apt_rpm:
       pkg: "{{samba_dc_common_packages | join(',')}}"
