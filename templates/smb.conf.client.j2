@@ -9,6 +9,11 @@
 
 	idmap config * : range = 10000-20000000
 	idmap config * : backend = tdb
+{% if samba_log_level is defined %}
+	log level = {{ samba_log_level }}
+	timestamp logs = yes
+	debug hires timestamp = yes
+{% endif %}
 [homes]
 	comment = Home Directories
 	browseable = no
