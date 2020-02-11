@@ -12,6 +12,9 @@
     samba_dns_forward: 8.8.8.8
     samba_dns_backend: SAMBA_INTERNAL
     samba_master_address: 10.64.6.1
+    samba_sysvol_sync_source: dc0
+    samba_sysvol_sync_targets: "dc1 dc2"
+    samba_sysvol_sync_timeout: 300
   tags: [ "master" ]
 
 - name: deploy samba DC replicas

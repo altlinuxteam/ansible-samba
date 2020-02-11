@@ -2,7 +2,7 @@ require 'mkmf'
 require 'fileutils'
 
 NUM_CONTROLLERS=3
-NUM_CLIENTS=3
+NUM_CLIENTS=1
 
 dcs=NUM_CONTROLLERS - 1
 cls=NUM_CLIENTS - 1
@@ -39,18 +39,20 @@ Vagrant.configure("2") do |config|
           ansible.playbook = "provision.yml"
           ansible.groups = {
             "all:vars" => {
-              "ansible_become" => "yes"
             },
             "sambaDC-master" => ["dc0"],
             "sambaDC-master:vars" => {
+              "ansible_become" => "yes",
               "samba_flavor" => "master"
             },
             "sambaDC-replicas" => (1..dcs).map {|x| "dc#{x}"},
             "sambaDC-replicas:vars" => {
+              "ansible_become" => "yes",
               "samba_flavor" => "replica"
             },
             "samba-clients" => (0..cls).map {|x| "cl#{x}"},
             "samba-clients:vars" => {
+              "ansible_become" => "yes",
               "samba_flavor" => "client"
             },
           }
@@ -64,6 +66,12 @@ Vagrant.configure("2") do |config|
             samba_network: "10.64.6.0/24",
             samba_generate_domain_config: true,
             samba_domain_config_output: "domain_config",
+            samba_sysvol_sync: "true",
+            samba_sysvol_sync_source: "dc0",
+            samba_sysvol_sync_targets: (1..dcs).map {|x| "dc#{x}"},
+            samba_sysvol_sync_timeout: 5,
+            samba_sysvol_sync_target_user: "root",
+            samba_sysvol_sync_ssh_key: "/root/.ssh/osync_sysvol",
             gen_test_env: true
           }
         end
