@@ -1,0 +1,56 @@
+---
+- name: check required variables
+  fail: msg="{{ item }} is not defined"
+  when: item not in vars
+  with_items: "{{ samba_sysvol_replica_required_vars }}"
+
+- name: install samba sysvol replica
+  apt_rpm:
+    pkg: "{{samba_sysvol_replica_packages | join(',')}}"
+    state: installed
+  when: samba_sysvol_replica_packages | length > 0
+
+- name: generate ssh key for osync connections
+  shell: ssh-keygen -t ed25519 -f .tmp/osync_sysvol -C "" -N ""
+  args:
+    creates: .tmp/osync_sysvol
+  delegate_to: localhost
+  become: false
+
+- block:
+  - name: generate config for osync
+    template:
+      src: osync.conf
+      dest: "/etc/osync/sync-{{item}}.conf"
+    with_items: "{{samba_sysvol_sync_targets}}"
+
+  - name: register target hosts fingerprints
+    shell:
+      "ssh-keyscan {{item}} >> ~{{samba_sysvol_sync_target_user}}/.ssh/known_hosts"
+    with_items: "{{samba_sysvol_sync_targets}}"
+
+  - name: put private key to the node
+    copy:
+      src: .tmp/osync_sysvol
+      dest: "{{samba_sysvol_sync_ssh_key}}"
+      owner: "{{samba_sysvol_sync_target_user}}"
+      mode: 0400
+
+  - name: register osync in crontab
+    cron:
+      name: "OSync for {{item}}'s sysvol"
+      minute: "*/{{samba_sysvol_sync_timeout}}"
+      job: "/usr/bin/osync.sh /etc/osync/sync-{{item}}.conf --silent"
+    with_items: "{{samba_sysvol_sync_targets}}"
+
+  - name: enable and start crond service
+    service:
+      name: crond
+      enabled: true
+      state: started
+
+  when: inventory_hostname_short == samba_sysvol_sync_source
+
+- name: register public key for osync
+  shell: echo "{{ lookup('file', '.tmp/osync_sysvol.pub') }}" >> /root/.ssh/authorized_keys
+  when: inventory_hostname_short in samba_sysvol_sync_targets
