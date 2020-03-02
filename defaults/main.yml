@@ -34,3 +34,11 @@ samba_cl_packages:
   - sssd-ad
   - task-auth-ad-sssd
   - sshpass
+
+samba_sysvol_replica_required_vars:
+  - samba_sysvol_sync_source
+  - samba_sysvol_sync_targets
+  - samba_sysvol_sync_timeout
+
+samba_sysvol_replica_packages:
+  - osync
