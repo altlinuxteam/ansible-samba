@@ -1,7 +1,9 @@
 ---
 
 - name: install bind-utils (dig)
-  package: name=bind-utils state=present
+  apt_rpm:
+  pkg: bind-utils
+  state: present
 
 - name: wait for master DC to be up
   command: >

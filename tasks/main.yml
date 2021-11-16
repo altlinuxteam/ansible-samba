@@ -6,13 +6,14 @@
     with_items: "{{ samba_dc_required_vars }}"
 
   - name: install openresolv and etcnet
-    apt_rpm: pkg=openresolv,etcnet state=present
+    apt_rpm:
+    name: openresolv, etcnet
+    state: present
     register: openresolv_install
 
   - name: check if altlinux-openresolv service exists
     command: systemctl status altlinux-openresolv
-    register:
-      altlinux_openresolv_status
+    register: altlinux_openresolv_status
     failed_when: false
 
   - set_fact:
@@ -28,7 +29,8 @@
     when: altlinux_openresolv_exists|bool and openresolv_install.changed|bool
 
   - name: update apt database
-    shell: "apt-get update"
+    apt-rpm:
+      update_cache: yes
 
   - name: install samba DC common packages
     shell: "apt-get install -y {{ samba_dc_common_packages | join(' ') }}"
@@ -53,7 +55,6 @@
     file:
       path: "/usr/local/samba/private"
       state: directory
-    #shell: "mkdir -p /usr/local/samba/private" # /var/lib/samba/private
 
   - name: create kdc.conf
     template:
