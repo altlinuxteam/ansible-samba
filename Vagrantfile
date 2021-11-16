@@ -1,8 +1,8 @@
 require 'mkmf'
 require 'fileutils'
 
-NUM_CONTROLLERS=1
-NUM_CLIENTS=1
+NUM_CONTROLLERS=3
+NUM_CLIENTS=3
 
 dcs=NUM_CONTROLLERS - 1
 cls=NUM_CLIENTS - 1
@@ -23,6 +23,7 @@ Vagrant.configure("2") do |config|
       dc.vm.box = "BaseALT/alt-server-10-amd64"
       dc.vm.box_version = "1.0.0"
       dc.vm.box_download_checksum = "059d573abb92a46c9b62ce4f67e7a4f4"
+      dc.vm.box_download_checksum_type = "md5"
 
     end
   end
@@ -33,6 +34,7 @@ Vagrant.configure("2") do |config|
       cl.vm.box = "BaseALT/alt-workstation-10-amd64"
       cl.vm.box_version = "1.0.0"
       cl.vm.box_download_checksum = "ad657491a6e45e7ef4f0a2b7b2d04b65"
+      cl.vm.box_download_checksum_type = "md5"
 
       if ndx == cls
         cl.vm.provision "ansible" do |ansible|
