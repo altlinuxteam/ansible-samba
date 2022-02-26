@@ -8,11 +8,11 @@
   shell: |
     set -euo pipefail
     samba-tool sites create {{ item.key }}
-  loop: "{{ sambasites | dict2items }}"
+  loop: "{{ samba_sites | dict2items }}"
   when: "{{ item.key != samba_site }}"
 
 - name: create site subnets
   shell: |
     set -euo pipefail
     samba-tool sites subnet create {{ item.value.subnet }} {{ item.key }}
-  loop: "{{ sambasites | dict2items }}"
+  loop: "{{ samba_sites | dict2items }}"
