@@ -2,7 +2,7 @@
 	security = ads
 	realm = {{ samba_realm | upper }}
 	workgroup = {{ samba_domain | upper }}
-	netbios name = {{ dc_short_name | upper }}
+	netbios name = {{ inventory_hostname_short | upper }}
 	template shell = /bin/bash
 	kerberos method = system keytab
 	wins support = no

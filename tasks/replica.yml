@@ -38,8 +38,8 @@
   - name: try to joint to the domain as a replica
     shell: |
       set -euo pipefail
-      if ! samba-tool dns query {{ samba_master_hostname }} {{ samba_realm }} {{ dc_short_name }} A; then
-        samba-tool dns add {{ samba_master_hostname }} {{ samba_realm }} {{ dc_short_name }} A {{ ansible_eth0.ipv4.address }} -k yes
+      if ! samba-tool dns query {{ samba_master_hostname }} {{ samba_realm }} {{ inventory_hostname_short }} A; then
+        samba-tool dns add {{ samba_master_hostname }} {{ samba_realm }} {{ inventory_hostname_short }} A {{ ansible_eth0.ipv4.address }} -k yes
       fi
       if [[ ! -f /var/lib/samba/private/sam.ldb.d/DC={{(samba_realm | upper).replace('.', ',DC=')}}.ldb ]]; then
         samba-tool domain join {{ samba_realm }} DC --dns-backend={{ samba_dns_backend }} --backend-store={{ samba_backend_store }} --site={{ samba_site }} -k yes 2>&1 | tee /var/log/samba/join.log
@@ -76,6 +76,6 @@
 
 - name: register node in localhost hostvars
   set_fact:
-    samba_replicas: "{{ hostvars['localhost']['samba_replicas'] | default([]) }} + [ '{{ dc_short_name }}' ]"
+    samba_replicas: "{{ hostvars['localhost']['samba_replicas'] | default([]) }} + [ '{{ inventory_hostname_short }}' ]"
   delegate_to: localhost
   delegate_facts: true

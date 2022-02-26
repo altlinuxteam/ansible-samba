@@ -1,6 +1,6 @@
 # Global parameters
 [global]
-	netbios name = {{ dc_short_name | upper }}
+	netbios name = {{ inventory_hostname_short | upper }}
 	realm = {{ samba_realm | upper }}
 	workgroup = {{ samba_domain | upper }}
 	dns forwarder = {{ samba_dns_forward }}

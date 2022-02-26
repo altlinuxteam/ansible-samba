@@ -7,7 +7,7 @@
       set -euo pipefail
       if samba-tool domain info {{ ansible_eth0.ipv4.address }} -k yes; then
         samba-tool domain demote -k yes
-        samba-tool dns delete {{ samba_master_hostname }} { {samba_realm }} {{ dc_short_name }} A {{ ansible_eth0.ipv4.address }} -k yes
+        samba-tool dns delete {{ samba_master_hostname }} { {samba_realm }} {{ inventory_hostname_short }} A {{ ansible_eth0.ipv4.address }} -k yes
         echo replica_changed
       fi
     register: result
