@@ -30,6 +30,15 @@
     shell: echo {{samba_admin_pass}} | kinit administrator@{{samba_realm|upper}}
     changed_when: false
 
+  - name: search for samba address
+    shell: |
+      ip r | grep 'scope link' | grep {{samba_network}} | cut -d' ' -f3 | xargs ip -o -4 a sh dev | awk '{print $4;}' | cut -d'/' -f1
+    register: result
+
+  - name: register samba address
+    set_fact:
+      samba_address: "{{result.stdout}}"
+
   - name: generate smb.conf
     template:
       src: smb.conf.replica.j2
