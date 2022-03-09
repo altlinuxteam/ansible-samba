@@ -1,0 +1,7 @@
+---
+- name: register samba address
+  collections:
+    - ansible.netcommon
+    - ansible.utils
+  set_fact:
+    samba_address: "{{ ansible_all_ipv4_addresses | ipaddr(samba_network) | join }}"

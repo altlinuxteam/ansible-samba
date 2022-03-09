@@ -80,6 +80,7 @@
       name: "{{ inventory_hostname_short }}.{{ samba_realm }}"
       use: systemd
 
+  - include: common.yml
   - include: dns.yml
 
   when: samba_flavor != 'gen_test_env'
