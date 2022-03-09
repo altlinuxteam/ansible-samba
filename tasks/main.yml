@@ -68,12 +68,12 @@
       group: root
       mode: 0644
 
-  - name: set short and long name of dc
-    set_fact:
-      default_gateway: "{{ ansible_eth0.ipv4.address.split('.')[0:3] | join('.') }}.1"
-      network_prefix: "{{ network | ansible.netcommon.ipaddr('prefix') }}"
-    vars:
-      network: "{{ ansible_eth0.ipv4.address }}/{{ ansible_eth0.ipv4.netmask }}"
+      #  - name: set short and long name of dc
+      #    set_fact:
+      #      default_gateway: "{{ ansible_eth0.ipv4.address.split('.')[0:3] | join('.') }}.1"
+      #      network_prefix: "{{ network | ansible.netcommon.ipaddr('prefix') }}"
+      #    vars:
+      #      network: "{{ ansible_eth0.ipv4.address }}/{{ ansible_eth0.ipv4.netmask }}"
 
   - name: set hostname
     ansible.builtin.hostname:

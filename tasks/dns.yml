@@ -20,15 +20,15 @@
     state: directory
     mode: '0755'
 
-- name: set ipv4 address
-  template:
-    src: ipv4address.j2
-    dest: /etc/net/ifaces/eth0/ipv4address
-
-- name: set default route
-  template:
-    src: ipv4route.j2
-    dest: /etc/net/ifaces/eth0/ipv4route
+    #- name: set ipv4 address
+    #  template:
+    #    src: ipv4address.j2
+    #    dest: /etc/net/ifaces/eth0/ipv4address
+    #
+    #- name: set default route
+    #  template:
+    #    src: ipv4route.j2
+    #    dest: /etc/net/ifaces/eth0/ipv4route
 
 - name: set localhost as the nameserver for controllers
   template:
