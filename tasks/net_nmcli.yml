@@ -1,0 +1,67 @@
+---
+- name: Disable Cloud-init networkening
+  lineinfile:
+    path: /etc/cloud/cloud.cfg.d/99_disable-network.cfg
+    regexp: "^[# ]*network:"
+    line: "network: {config: disabled}"
+    create: yes
+    state: present
+  notify: restart network
+
+- name: Read Alterator network configuration
+  command: alterator-cmdline /net-eth action read
+  register: netstate
+  changed_when: False
+
+- name: Register Alterator network state
+  set_fact:
+    nm_native: "{{ netstate.stdout | regex_search('controlled:NetworkManagerNattive', ignorecase=True) | default('', true) | trim != '' }}"
+
+### TODO: Check all ethX dirs
+#- name: Pass network control to NetworkManager
+#  lineinfile:
+#    path: /etc/net/ifaces/eth0/options
+#    regexp: '^[# ]*{{ item.option }}='
+#    line: '{{ item.option }}={{ item.value }}'
+#    state: present
+#  with_items:
+#    - { option: 'DISABLED', value: 'yes' }
+#    - { option: 'NM_CONTROLLED', value: 'yes' }
+#    - { option: 'SYSTEMD_CONTROLLED', value: 'no' }
+#  notify: restart network
+#
+### TODO: Check all ethX dirs
+#- name: Remove etcnet resolv.conf
+#  file:
+#    path: /etc/net/ifaces/{{ item.key }}/resolv.conf
+#    state: absent
+#  notify: restart network
+#  loop: "{{ lookup('dict', samba_interfaces, wantlist=True) }}"
+
+- name: Setting up network via NetworkManager
+  community.general.nmcli:
+    conn_name: "Native {{ item.key }}"
+    type: ethernet
+    ifname: "{{ item.key }}"
+    ip4: "{{ item.value.ip4 }}"
+    gw4: "{{ item.value.gw4 }}"
+    dns4: "{{ item.value.dns4 }}"
+    autoconnect: yes
+    state: present
+  notify: networkmanager reconnect
+  loop: "{{ lookup('dict', samba_interfaces, wantlist=True) }}"
+
+- name: Enable Alterator network type NetworkManagerNative
+  block:
+    - name: "Alterator: update network state"
+      command: alterator-cmdline /net-eth action write controlled NetworkManagerNative
+
+    - name: "Alterator: commit changes"
+      shell: |
+        alterator-cmdline /net-eth action commit
+      notify:
+      - restart network
+  when: nm_native == False
+
+- name: Restart needed services
+  meta: flush_handlers
