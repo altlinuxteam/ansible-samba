@@ -19,3 +19,6 @@
   service:
     name: bind
     state: restarted
+
+- name: networkmanager reconnect
+  shell: nmcli connection up eth0
