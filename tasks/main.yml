@@ -40,11 +40,13 @@
   - name: install samba-dc-mitkrb5 packages
     block:
     - apt_rpm:
-        pkg: samba-dc
+        pkg: "{{ samba_dc_heimdal_packages }}"
         state: absent
+      notify: restart samba
     - apt_rpm:
-        pkg: "{{ samba_dc_mitkrb5_common_packages }}"
+        pkg: "{{ samba_dc_mitkrb5_packages }}"
         state: present
+      notify: restart samba
     when: samba_dc_mitkrb5 | bool
 
   - name: create /etc/krb5.conf
@@ -74,6 +76,17 @@
       #      network_prefix: "{{ network | ansible.netcommon.ipaddr('prefix') }}"
       #    vars:
       #      network: "{{ ansible_eth0.ipv4.address }}/{{ ansible_eth0.ipv4.netmask }}"
+  - name: install samba-dc-heimdal packages
+    block:
+    - apt_rpm:
+        pkg: "{{ samba_dc_mitkrb5_packages }}"
+        state: absent
+      notify: restart samba
+    - apt_rpm:
+        pkg: "{{ samba_dc_heimdal_packages }}"
+        state: present
+      notify: restart samba
+    when: not samba_dc_mitkrb5 | bool
 
   - name: set hostname
     ansible.builtin.hostname:

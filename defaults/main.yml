@@ -22,13 +22,15 @@ samba_dc_common_packages:
   - krb5-kinit
   - ldb-tools
   - lmdb-utils
-  - samba-dc
   - samba-dc-client
   - sshpass
   - alterator-gpupdate
 
-samba_dc_mitkrb5_common_packages:
+samba_dc_mitkrb5_packages:
   - samba-dc-mitkrb5
+
+samba_dc_heimdal_packages:
+  - samba-dc
 
 samba_dc_master_packages: []
 
