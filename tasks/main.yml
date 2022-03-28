@@ -94,8 +94,6 @@
       use: systemd
 
   - include: common.yml
-  - include: dns.yml
-
   when: samba_flavor != 'gen_test_env'
 
 - name: create openldap config directory
