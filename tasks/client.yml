@@ -4,81 +4,13 @@
   when: item not in vars
   with_items: "{{ samba_cl_required_vars }}"
 
-- name: check if NetworkManager is present (ALTLinux)
-  command: >
-    rpm -q NetworkManager-daemon
-  register: networkmanager_present
-  failed_when: false
+#- name: Configure client network with NetworkManager
+#  include_tasks: net_nmcli.yml
 
-- name: disable resolv.conf management by NM
-  lineinfile:
-    path: /etc/NetworkManager/NetworkManager.conf
-    regexp: '^dns='
-    line: 'dns=none'
-    backrefs: true #yes
-    state: present
-  register: nm_conf_is
-  notify: restart networkmanager
-  when: networkmanager_present.rc == 0
-
-- name: Add line if not configured
-  lineinfile:
-    state: present
-    dest: /etc/NetworkManager/NetworkManager.conf
-    line: 'dns=none'
-    regexp: ''
-    insertafter: EOF
-  when:
-    - networkmanager_present.rc == 0
-    - nm_conf_is.changed == false
-  notify: restart networkmanager
-
-- name: check if /etc/net/ifaces/eth0 exists
-  stat: path=/etc/net/ifaces/eth0
-  register: ifaces_eth0_st
-  failed_when: false
-
-- set_fact:
-    managed_by_etcnet: "{{ ifaces_eth0_st.stat.exists and ifaces_eth0_st.stat.isdir }}"
-
-- name: check if /etc/net/ifaces/eth0/options exists
-  stat: path=/etc/net/ifaces/eth0/options
-  register: ifaces_eth0_options_st
-  failed_when: false
-
-- set_fact:
-    options_exists: "{{ ifaces_eth0_options_st.stat.exists and ifaces_eth0_options_st.stat.isreg }}"
-
-- name: enable eth0 (etcnet)
-  lineinfile:
-    path: /etc/net/ifaces/eth0/options
-    regexp: '^DISABLED='
-    line: 'DISABLED=no'
-    backrefs: true #yes
-    state: present
-  register: net_conf_is
-  changed_when: managed_by_etcnet|bool and net_conf_is.changed
-  when: managed_by_etcnet|bool and options_exists|bool
-  notify: restart network
-
-
-- meta: flush_handlers
-  ignore_errors: true #yes
-
-- name: wait for node to comeback
-  wait_for_connection:
-    delay: 3
-    timeout: 30
-
-- name: update resolver, step 1
-  command: resolvconf -d NetworkManager
-  when: networkmanager_present.rc == 0
-  failed_when: false
-  changed_when: false
-
-- name: update resolver, step 2
-  command: resolvconf -u
-  changed_when: false
+#- name: wait for node to comeback
+#  wait_for_connection:
+#    delay: 3
+#    timeout: 30
 
 - name: install samba client packages
   apt_rpm:
@@ -86,24 +18,40 @@
     state: present
   when: samba_cl_packages | length > 0
 
-- name: create /etc/krb5.conf
-  template:
-    src: krb5.conf.j2
-    dest: /etc/krb5.conf
-    owner: root
-    group: root
-    mode: 0644
-
-- name: generate initial smb.conf
-  template:
-    src: smb.conf.client.j2
-    dest: /etc/samba/smb.conf
+#- name: create /etc/krb5.conf
+#  template:
+#    src: krb5.conf.j2
+#    dest: /etc/krb5.conf
+#    owner: root
+#    group: root
+#    mode: 0644
+#
+#- name: generate initial smb.conf
+#  template:
+#    src: smb.conf.client.j2
+#    dest: /etc/samba/smb.conf
 
 - name: wait for domain controller(s) to start up
   include_tasks: wait4master.yml
 
+- name: check domain join status
+  command: system-auth status
+  register: authstate
+  changed_when: False
+
+- name: register domain join status
+  set_fact:
+    joined: "{{ authstate.stdout == 'ad ' + samba_realm | upper + ' ' + inventory_hostname_short | upper + ' ' + samba_domain | upper }}"
+
 - name: join to the domain
-  shell: system-auth write ad {{samba_realm|upper}} {{ inventory_hostname_short }} {{samba_domain|upper}} 'Administrator' '{{samba_admin_pass}}'
+  shell: |
+    system-auth write ad \
+    {{ samba_realm | upper }} \
+    {{ inventory_hostname_short }} \
+    {{ samba_domain | upper }} \
+    'Administrator' \
+    '{{ samba_admin_pass }}'
+  when: joined == False or "{{ samba_deploy_soft | default(False, true) }}" == False
 
 - name: register node in localhost hostvars
   set_fact:
