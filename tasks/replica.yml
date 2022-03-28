@@ -10,6 +10,8 @@
 
 - name: prepare samba server
   include_tasks: prepare.yml
+- name: generate smb.conf
+  include_tasks: smb.conf.yml
 
 - name: prepare bind service
   include_tasks: bind.yml

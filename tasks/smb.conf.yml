@@ -1,0 +1,83 @@
+---
+- name: Remove smb.conf
+  file:
+    path: /etc/samba/smb.conf
+    state: absent
+  when: samba_deploy_soft == False
+
+- name: Prepare smb.conf
+  lineinfile:
+    path: /etc/samba/smb.conf
+    line: "{{ item }}"
+    create: yes
+    state: present
+  with_items:
+    - "[global]"
+    - "[netlogon]"
+    - "[sysvol]"
+
+- name: Update smb.conf
+  lineinfile:
+    path: /etc/samba/smb.conf
+    insertafter: "^[\t ]*\\[{{ item.scope }}\\][\t ]*"
+    regexp: "^[\t #/;]*{{ item.key }}[\t ]*="
+    line: "\t{{ item.key }} = {{ item.value }}"
+    backup: yes
+    firstmatch: yes
+    state: "{{ item.st }}"
+  vars:
+    items:
+      - { scope: 'global', key: 'security', value: '{{ "ads" }}', st: 'absent' }
+      - { scope: 'global', key: 'realm', value: '{{ samba_realm | upper }}', st: 'present' }
+      - { scope: 'global', key: 'workgroup', value: '{{ samba_domain | upper }}', st: 'present' }
+      - { scope: 'global', key: 'netbios name', value: '{{ inventory_hostname_short | upper }}', st: 'present' }
+      - { scope: 'global', key: 'template shell', value: '/bin/bash', st: 'absent' }
+      - { scope: 'global', key: 'kerberos method', value: 'dedicated keytab', st: 'present' }
+      - { scope: 'global', key: 'dedicated keytab file', value: '/etc/krb5.keytab', st: 'present' }
+      - { scope: 'global', key: 'wins support', value: 'no', st: 'absent' }
+      - { scope: 'global', key: 'winbind use default domain', value: 'yes', st: 'absent' }
+      - { scope: 'global', key: 'winbind enum users', value: 'no', st: 'absent' }
+      - { scope: 'global', key: 'winbind enum groups', value: 'no', st: 'absent' }
+      - { scope: 'global', key: 'template homedir', value: '/home/{{ samba_realm | upper }}/%U', st: 'absent' }
+      - { scope: 'global', key: 'dns forwarder', value: '{{ samba_dns_forward }}', st: 'present' }
+      - { scope: 'global', key: 'server role', value: 'active directory domain controller', st: 'present' }
+      - { scope: 'global', key: 'idmap_ldb:use rfc2307', value: 'yes', st: 'present' }
+      - { scope: 'global', key: 'bind interfaces only', value: 'yes', st: 'present' }
+      - { scope: 'global', key: 'interfaces', value: 'lo {{ samba_master_address }}', st: 'present' }
+  with_items: "{{ items | reverse | list }}"
+
+- name: Update [netlogon] in smb.conf
+  blockinfile:
+    path: /etc/samba/smb.conf
+    insertafter: "^[\t ]*\\[netlogon\\][\t ]*"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK [netlogon]"
+    block: |2
+      	path = /var/lib/samba/sysvol/{{ samba_domain }}/scripts
+      	read only = No
+
+- name: Update [sysvol] in smb.conf
+  blockinfile:
+    path: /etc/samba/smb.conf
+    insertafter: "^[\t ]*\\[sysvol\\][\t ]*"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK [sysvol]"
+    block: |2
+      	path = /var/lib/samba/sysvol
+      	read only = No
+
+- name: Enable BIND9_DLZ DNS Backend in smb.conf
+  lineinfile:
+    path: /etc/samba/smb.conf
+    insertafter: "^[\t ]*\\[global\\][\t ]*"
+    regexp: "^[\t #/;]*server services[\t ]*="
+    line: "\tserver services = -dns"
+    state: present
+  when: samba_dns_backend != "SAMBA_INTERNAL"
+
+- name: Enable INTERNAL DNS Backend in smb.conf
+  lineinfile:
+    path: /etc/samba/smb.conf
+    insertafter: "^[\t ]*\\[global\\][\t ]*"
+    regexp: "^[\t #/;]*server services[\t ]*="
+    line: "\tserver services = -dns"
+    state: absent
+  when: samba_dns_backend == "SAMBA_INTERNAL"
