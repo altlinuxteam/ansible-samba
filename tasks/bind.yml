@@ -27,3 +27,10 @@
   template:
     src: options.conf.j2
     dest: /etc/bind/options.conf
+
+- name: enable bind service
+  service:
+    name: bind
+    enabled: true
+  register: cmd_result
+  failed_when: "cmd_result is failed and ('find' not in cmd_result.msg and 'found' not in cmd_result.msg)"

@@ -17,6 +17,7 @@
 
 - name: prepare bind service
   include_tasks: bind.yml
+  when: samba_dns_backend != "SAMBA_INTERNAL"
 
 - name: install samba replica packages
   apt_rpm:
@@ -77,6 +78,33 @@
       name: bind
       enabled: false
     when: samba_dns_backend == "SAMBA_INTERNAL"
+
+- name: disable bind service
+  service:
+    name: bind
+    enabled: false
+    state: stopped
+  when: samba_dns_backend == "SAMBA_INTERNAL"
+  register: cmd_result
+  failed_when: "cmd_result is failed and ('find' not in cmd_result.msg and 'found' not in cmd_result.msg)"
+
+- name: enable samba service
+  service:
+    name: samba
+    enabled: true
+
+- name: start bind service
+  service:
+    name: bind
+    state: started
+  when: samba_dns_backend != "SAMBA_INTERNAL"
+  register: cmd_result
+  failed_when: "cmd_result is failed and ('find' not in cmd_result.msg and 'found' not in cmd_result.msg)"
+
+- name: start samba service
+  service:
+    name: samba
+    state: started
 
 - name: register node in localhost hostvars
   set_fact:
