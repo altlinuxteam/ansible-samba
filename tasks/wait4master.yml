@@ -10,3 +10,4 @@
   until: kerberos_srv_records.stdout|trim != ''
   delay: 10
   retries: 60
+  changed_when: False
