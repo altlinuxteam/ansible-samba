@@ -1,12 +1,27 @@
 ---
+- name: Check bind work in chroot
+  command: control bind-chroot
+  register: bind_chrooted
+  check_mode: no
+  changed_when: False
+
 - name: Disable bind work in chroot
-  shell: control bind-chroot disabled
+  command: control bind-chroot disabled
+  when: " 'disabled' not in bind_chrooted.stdout "
 
 - name: Disable KRB5RCACHETYPE for bind
-  shell: grep -q KRB5RCACHETYPE /etc/sysconfig/bind || echo 'KRB5RCACHETYPE="none"' >> /etc/sysconfig/bind
+  lineinfile:
+    path: /etc/sysconfig/bind
+    regexp: '^[ #/;]*KRB5RCACHETYPE=.*'
+    line: 'KRB5RCACHETYPE="none"'
+    state: present
 
 - name: Add BIND9_DLZ plugin for bind
-  shell: grep -q 'bind-dns' /etc/bind/named.conf || echo 'include "/var/lib/samba/bind-dns/named.conf";' >> /etc/bind/named.conf
+  lineinfile:
+    path: /etc/bind/named.conf
+    regexp: '^[ #/;]*include.*".*/var/lib/samba/bind-dns/named.conf.*".*;'
+    line: 'include "/var/lib/samba/bind-dns/named.conf";'
+    state: present
 
 - name: generate options.conf for bind
   template:
