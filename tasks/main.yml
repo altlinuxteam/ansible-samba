@@ -5,30 +5,30 @@
     when: item not in vars
     with_items: "{{ samba_dc_required_vars }}"
 
-  - name: remove conflicting packages and update the package database
-    apt_rpm: pkg=sysconfig-network state=absent update_cache=yes
-
-  - name: install openresolv and etcnet
-    apt_rpm: pkg=openresolv,etcnet state=present
-    register: openresolv_install
-
-  - name: check if altlinux-openresolv service exists
-    command: systemctl status altlinux-openresolv
-    register:
-      altlinux_openresolv_status
-    failed_when: false
-
-  - set_fact:
-      altlinux_openresolv_exists: "{{ altlinux_openresolv_status.rc != 3 }}"
-
-  # XXX: touching /etc/resolv.conf might start altlinux-openresolv.service,
-  # (if it hasn't been started before, i.e. if the openresolv package haven't
-  # been installed before applying this role). altlinux-openresolv overwrites
-  # modifications of /etc/resolv.conf done by this role. Therefore explicitly
-  # start altlinux-openresolv before adjusting /etc/resolv.conf
-  - name: start altlinux-openresolv
-    service: name=altlinux-openresolv state=started
-    when: altlinux_openresolv_exists|bool and openresolv_install.changed|bool
+    #  - name: remove conflicting packages and update the package database
+    #    apt_rpm: pkg=sysconfig-network state=absent update_cache=yes
+    #
+    #  - name: install openresolv and etcnet
+    #    apt_rpm: pkg=openresolv,etcnet state=present
+    #    register: openresolv_install
+    #
+    #  - name: check if altlinux-openresolv service exists
+    #    command: systemctl status altlinux-openresolv
+    #    register:
+    #      altlinux_openresolv_status
+    #    failed_when: false
+    #
+    #  - set_fact:
+    #      altlinux_openresolv_exists: "{{ altlinux_openresolv_status.rc != 3 }}"
+    #
+    #  # XXX: touching /etc/resolv.conf might start altlinux-openresolv.service,
+    #  # (if it hasn't been started before, i.e. if the openresolv package haven't
+    #  # been installed before applying this role). altlinux-openresolv overwrites
+    #  # modifications of /etc/resolv.conf done by this role. Therefore explicitly
+    #  # start altlinux-openresolv before adjusting /etc/resolv.conf
+    #  - name: start altlinux-openresolv
+    #    service: name=altlinux-openresolv state=started
+    #    when: altlinux_openresolv_exists|bool and openresolv_install.changed|bool
 
   - name: install samba DC common packages
     apt_rpm:
@@ -65,6 +65,7 @@
     ansible.builtin.hostname:
       name: "{{ inventory_hostname_short }}.{{ samba_realm }}"
       use: systemd
+    notify: restart samba
 
   - include: common.yml
   when: samba_flavor != 'gen_test_env'
@@ -88,12 +89,6 @@
   until: task_result.rc == 0
   retries: 30
   delay: 1
-
-- name: restart samba service
-  service:
-    name: samba
-    state: restarted
-  when: samba_flavor != 'client'
 
 - name: generate test env vars
   include_tasks: generate_test_env_vars.yml
