@@ -10,8 +10,6 @@
 - name: generate samba controller config files
   include: dc_conf.yml
 
-- name: prepare samba server
-  include_tasks: prepare.yml
 - name: generate smb.conf
   include_tasks: smb.conf.yml
 
@@ -24,6 +22,14 @@
     pkg: "{{ samba_dc_replica_packages }}"
     state: present
   when: samba_dc_replica_packages | length > 0
+  notify: restart samba
+
+- name: remove conflict samba server packages
+  apt_rpm:
+    pkg:
+      - nss-ldapd
+      - nscd
+    state: absent
   notify: restart samba
 
 - name: wait for master DC to start up
