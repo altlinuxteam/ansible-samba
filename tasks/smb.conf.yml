@@ -27,18 +27,11 @@
     state: "{{ item.st }}"
   vars:
     items:
-      - { scope: 'global', key: 'security', value: '{{ "ads" }}', st: 'absent' }
       - { scope: 'global', key: 'realm', value: '{{ samba_realm | upper }}', st: 'present' }
       - { scope: 'global', key: 'workgroup', value: '{{ samba_domain | upper }}', st: 'present' }
       - { scope: 'global', key: 'netbios name', value: '{{ inventory_hostname_short | upper }}', st: 'present' }
-      - { scope: 'global', key: 'template shell', value: '/bin/bash', st: 'absent' }
       - { scope: 'global', key: 'kerberos method', value: 'dedicated keytab', st: 'present' }
       - { scope: 'global', key: 'dedicated keytab file', value: '/etc/krb5.keytab', st: 'present' }
-      - { scope: 'global', key: 'wins support', value: 'no', st: 'absent' }
-      - { scope: 'global', key: 'winbind use default domain', value: 'yes', st: 'absent' }
-      - { scope: 'global', key: 'winbind enum users', value: 'no', st: 'absent' }
-      - { scope: 'global', key: 'winbind enum groups', value: 'no', st: 'absent' }
-      - { scope: 'global', key: 'template homedir', value: '/home/{{ samba_realm | upper }}/%U', st: 'absent' }
       - { scope: 'global', key: 'dns forwarder', value: '{{ samba_dns_forward }}', st: 'present' }
       - { scope: 'global', key: 'server role', value: 'active directory domain controller', st: 'present' }
       - { scope: 'global', key: 'idmap_ldb:use rfc2307', value: 'yes', st: 'present' }
