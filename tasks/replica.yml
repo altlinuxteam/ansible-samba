@@ -4,9 +4,6 @@
   when: item not in vars
   with_items: "{{ samba_dc_replica_required_vars }}"
 
-- name: clean samba replica
-  include_tasks: replica_clean.yml
-  when: samba_clean_replica is defined and samba_clean_replica
 - name: generate samba controller config files
   include: dc_conf.yml
 
@@ -35,55 +32,49 @@
 - name: wait for master DC to start up
   include_tasks: wait4master.yml
 
+- name: check if already provisioned
+  stat:
+    path: "/var/lib/samba/.ansible_replica"
+  register: samba_replica
+
+- name: get kerberos keky
+  shell: echo {{samba_admin_pass}} | kinit administrator@{{samba_realm|upper}}
+  changed_when: false
+
 - name: register node as a replica
   block:
-  - name: get kerberos keky
-    shell: echo {{samba_admin_pass}} | kinit administrator@{{samba_realm|upper}}
-    changed_when: false
+    - name: stop BIND9 daemon
+      service:
+        name: bind
+        state: stopped
+      register: cmd_result
+      failed_when: "cmd_result is failed and ('find' not in cmd_result.msg and 'found' not in cmd_result.msg)"
 
-  - name: generate smb.conf
-    template:
-      src: smb.conf.replica.j2
-      dest: /etc/samba/smb.conf
+    - name: stop Samba DC
+      service:
+        name: samba
+        state: stopped
 
-  - name: try to joint to the domain as a replica
-    shell: |
-      set -euo pipefail
-      if ! samba-tool dns query {{ samba_master_hostname }} {{ samba_realm }} {{ inventory_hostname_short }} A; then
-        samba-tool dns add {{ samba_master_hostname }} {{ samba_realm }} {{ inventory_hostname_short }} A {{ samba_address }} -k yes
-      fi
-      if [[ ! -f /var/lib/samba/private/sam.ldb.d/DC={{(samba_realm | upper).replace('.', ',DC=')}}.ldb ]]; then
-        samba-tool domain join {{ samba_realm }} DC --dns-backend={{ samba_dns_backend }} --backend-store={{ samba_backend_store }} --site={{ samba_site }} -k yes 2>&1 | tee /var/log/samba/join.log
-        echo replica_changed
-      fi
-    register: result
-    changed_when: '"replica_changed" in result.stdout'
-    notify: restart samba
+    - name: start provisioning replica
+      include_tasks: replica_provision.yml
+  rescue:
+    - name: replica provision failed; remove intermidiate results
+      file:
+        path: "/var/lib/samba"
+        state: absent
+    - fail: msg="replica provision failed"
+  when: samba_replica.stat.exists == False or samba_deploy_soft == False
 
-  - name: set localhost as a nameserver
-    template:
-      src: resolv.conf.j2
-      dest: /etc/net/ifaces/lo/resolv.conf
-    vars:
-      master_nameserver: '127.0.0.1'
-    notify: restart network
+- name: Create provision state file
+  copy:
+    content: ""
+    dest: /var/lib/samba/.ansible_replica
+    force: no
 
-  - name: samba upgrade dns
-    shell: samba_upgradedns --dns-backend={{samba_dns_backend}}
-    when: samba_dns_backend != "SAMBA_INTERNAL"
-    notify: restart bind
-
-  - name: enable bind service
-    service:
-      name: bind
-      enabled: true
-    when: samba_dns_backend != "SAMBA_INTERNAL"
-
-  - name: disable bind service
-    service:
-      name: bind
-      enabled: false
-    when: samba_dns_backend == "SAMBA_INTERNAL"
+- name: samba upgrade dns
+  shell: samba_upgradedns --dns-backend={{samba_dns_backend}}
+  when: samba_dns_backend != "SAMBA_INTERNAL"
+  notify: restart bind
 
 - name: disable bind service
   service:

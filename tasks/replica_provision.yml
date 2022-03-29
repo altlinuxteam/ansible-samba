@@ -1,0 +1,24 @@
+---
+- name: Remove replica /var/lib/samba directory
+  file:
+    path: /var/lib/samba
+    state: absent
+
+- name: Create replica /var/lib/samba directory
+  file:
+    path: /var/lib/samba
+    state: directory
+    owner: root
+    mode: 0755
+
+- name: Run samba-tool replica provision
+  shell:
+    cmd: |
+      set -euo pipefail
+      /usr/bin/samba-tool domain join {{ samba_realm }} DC \
+          --dns-backend={{ samba_dns_backend }} \
+          --backend-store={{ samba_backend_store }} \
+          --site={{ samba_site }} \
+          -k yes \
+          2>&1 | tee /var/log/samba/join.log
+    creates: "/var/lib/samba/private/sam.ldb.d/DC={{ (samba_realm | upper).replace('.', ',DC=') }}.ldb"
