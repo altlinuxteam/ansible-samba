@@ -18,30 +18,32 @@
     state: present
   when: samba_cl_packages | length > 0
 
-#- name: create /etc/krb5.conf
-#  template:
-#    src: krb5.conf.j2
-#    dest: /etc/krb5.conf
-#    owner: root
-#    group: root
-#    mode: 0644
-#
-#- name: generate initial smb.conf
-#  template:
-#    src: smb.conf.client.j2
-#    dest: /etc/samba/smb.conf
-
 - name: wait for domain controller(s) to start up
   include_tasks: wait4master.yml
 
+- name: check domain info status
+  command: alterator-cmdline /auth action read
+  register: authinfo
+  changed_when: False
+
+- name: register domain info status
+  set_fact:
+    joined_info: "{{ ( authinfo.stdout | regex_search('auth_type:' + 'ad') and
+                       authinfo.stdout | regex_search('ad_domain:' + samba_realm | upper) and
+                       authinfo.stdout | regex_search('ad_host:' + inventory_hostname_short | upper) and
+                       authinfo.stdout | regex_search('ad_workgroup:' + samba_domain | upper) ) != none }}"
+
 - name: check domain join status
-  command: system-auth status
+  command: kinit -k "{{ inventory_hostname_short | upper }}\$"
   register: authstate
   changed_when: False
+  failed_when: authstate is failed and
+               'Keytab contains no suitable keys' not in authstate.stderr and
+               'not found in Kerberos database' not in authstate.stderr
 
 - name: register domain join status
   set_fact:
-    joined: "{{ authstate.stdout == 'ad ' + samba_realm | upper + ' ' + inventory_hostname_short | upper + ' ' + samba_domain | upper }}"
+    joined: "{{ joined_info and (authstate.rc == 0) }}"
 
 - name: join to the domain
   shell: |
