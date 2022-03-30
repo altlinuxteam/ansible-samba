@@ -3,7 +3,7 @@
   file:
     path: /etc/samba/smb.conf
     state: absent
-  when: samba_deploy_soft == False
+  when: not samba_deploy_soft | bool
 
 - name: Prepare smb.conf
   lineinfile:

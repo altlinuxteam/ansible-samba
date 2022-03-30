@@ -12,7 +12,7 @@
   failed_when: site_create.rc != 0 and "SiteAlreadyExistsException" not in site_create.stderr
   changed_when: site_create.rc == 0
   loop: "{{ samba_sites | dict2items }}"
-  when: "{{ item.key != samba_site }}"
+  when: item.key != samba_site
 
 - name: create site subnets
   shell: |

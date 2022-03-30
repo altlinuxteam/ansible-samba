@@ -7,7 +7,7 @@
 
 - name: Disable bind work in chroot
   command: control bind-chroot disabled
-  when: " 'disabled' not in bind_chrooted.stdout "
+  when: "'disabled' not in bind_chrooted.stdout"
 
 - name: Disable KRB5RCACHETYPE for bind
   lineinfile:
@@ -33,4 +33,4 @@
     name: bind
     enabled: true
   register: cmd_result
-  failed_when: "cmd_result is failed and ('find' not in cmd_result.msg and 'found' not in cmd_result.msg)"
+  failed_when: cmd_result is failed and ('find' not in cmd_result.msg and 'found' not in cmd_result.msg)

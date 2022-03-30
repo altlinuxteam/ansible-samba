@@ -48,7 +48,7 @@
         name: bind
         state: stopped
       register: cmd_result
-      failed_when: "cmd_result is failed and ('find' not in cmd_result.msg and 'found' not in cmd_result.msg)"
+      failed_when: cmd_result is failed and ('find' not in cmd_result.msg and 'found' not in cmd_result.msg)
 
     - name: stop Samba DC
       service:
@@ -63,7 +63,7 @@
         path: "/var/lib/samba"
         state: absent
     - fail: msg="replica provision failed"
-  when: samba_replica.stat.exists == False or samba_deploy_soft == False
+  when: not samba_replica.stat.exists | bool or not samba_deploy_soft | bool
 
 - name: Create provision state file
   copy:
@@ -83,7 +83,7 @@
     state: stopped
   when: samba_dns_backend == "SAMBA_INTERNAL"
   register: cmd_result
-  failed_when: "cmd_result is failed and ('find' not in cmd_result.msg and 'found' not in cmd_result.msg)"
+  failed_when: cmd_result is failed and ('find' not in cmd_result.msg and 'found' not in cmd_result.msg)
 
 - name: enable samba service
   service:
@@ -96,7 +96,7 @@
     state: started
   when: samba_dns_backend != "SAMBA_INTERNAL"
   register: cmd_result
-  failed_when: "cmd_result is failed and ('find' not in cmd_result.msg and 'found' not in cmd_result.msg)"
+  failed_when: cmd_result is failed and ('find' not in cmd_result.msg and 'found' not in cmd_result.msg)
 
 - name: start samba service
   service:

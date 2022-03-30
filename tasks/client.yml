@@ -53,7 +53,7 @@
     {{ samba_domain | upper }} \
     'Administrator' \
     '{{ samba_admin_pass }}'
-  when: joined == False or "{{ samba_deploy_soft | default(False, true) }}" == False
+  when: not joined | bool or not samba_deploy_soft | bool
 
 - name: register node in localhost hostvars
   set_fact:
