@@ -37,9 +37,7 @@
   command: kinit -k "{{ inventory_hostname_short | upper }}\$"
   register: authstate
   changed_when: False
-  failed_when: authstate is failed and
-               'Keytab contains no suitable keys' not in authstate.stderr and
-               'not found in Kerberos database' not in authstate.stderr
+  failed_when: False
 
 - name: register domain join status
   set_fact:
