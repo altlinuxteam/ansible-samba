@@ -36,7 +36,7 @@
       - { scope: 'global', key: 'server role', value: 'active directory domain controller', st: 'present' }
       - { scope: 'global', key: 'idmap_ldb:use rfc2307', value: 'yes', st: 'present' }
       - { scope: 'global', key: 'bind interfaces only', value: 'yes', st: 'present' }
-      - { scope: 'global', key: 'interfaces', value: 'lo {{ samba_address }}', st: 'present' }
+      - { scope: 'global', key: 'interfaces', value: '{{ samba_address }} lo', st: 'present' }
   with_items: "{{ items | reverse | list }}"
 
 - name: Update [netlogon] in smb.conf
