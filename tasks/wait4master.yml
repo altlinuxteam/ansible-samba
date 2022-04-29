@@ -5,9 +5,10 @@
 
 - name: wait for master DC to be up
   command: >
-    dig -t SRV +noall +answer _kerberos._udp.{{ samba_realm|lower }}
+    host -t SRV _kerberos._udp.{{ samba_realm|lower }}
   register: kerberos_srv_records
-  until: kerberos_srv_records.stdout|trim != ''
+  until: kerberos_srv_records is succeeded
   delay: 10
   retries: 60
+  ignore_errors: yes
   changed_when: False
