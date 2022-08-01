@@ -22,3 +22,18 @@
           -k yes \
           2>&1 | tee /var/log/samba/join.log
     creates: "/var/lib/samba/private/sam.ldb.d/DC={{ (samba_realm | upper).replace('.', ',DC=') }}.ldb"
+  when: samba_backend_store | default('tdb', True) == 'tdb'
+
+- name: Run samba-tool replica provision with mdb size
+  shell:
+    cmd: |
+      set -euo pipefail
+      /usr/bin/samba-tool domain join {{ samba_realm }} DC \
+          --dns-backend={{ samba_dns_backend }} \
+          --backend-store={{ samba_backend_store }} \
+          --backend-store-size={{ samba_backend_store_size | default('4Gb', True) }} \
+          --site={{ samba_site }} \
+          -k yes \
+          2>&1 | tee /var/log/samba/join.log
+    creates: "/var/lib/samba/private/sam.ldb.d/DC={{ (samba_realm | upper).replace('.', ',DC=') }}.ldb"
+  when: samba_backend_store | default('tdb', True) == 'mdb'

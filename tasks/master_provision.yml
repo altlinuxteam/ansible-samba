@@ -27,3 +27,23 @@
           --site='{{ samba_site }}' \
           2>&1 | tee /var/log/samba/master_provision.log
     creates: "/var/lib/samba/private/sam.ldb.d/DC={{ (samba_realm | upper).replace('.', ',DC=') }}.ldb"
+  when: samba_backend_store | default('tdb', True) == 'tdb' 
+
+- name: Run samba-tool provision with mdb size
+  shell:
+    cmd: |
+      set -euo pipefail
+      /usr/bin/samba-tool domain provision \
+          --realm={{ samba_realm | upper }} \
+          --domain={{ samba_domain | upper }} \
+          --adminpass='{{ samba_admin_pass }}' \
+          --dns-backend={{ samba_dns_backend }} \
+          --backend-store={{ samba_backend_store }} \
+          --backend-store-size={{ samba_backend_store_size | default('4Gb', True) }} \
+          --server-role=dc \
+          --use-rfc2307 \
+          --host-ip={{ samba_master_address }} \
+          --site='{{ samba_site }}' \
+          2>&1 | tee /var/log/samba/master_provision.log
+    creates: "/var/lib/samba/private/sam.ldb.d/DC={{ (samba_realm | upper).replace('.', ',DC=') }}.ldb"
+  when: samba_backend_store | default('tdb', True) == 'mdb' 
