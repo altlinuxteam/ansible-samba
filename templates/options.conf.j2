@@ -9,9 +9,15 @@ options {
 		tkey-gssapi-keytab "/var/lib/samba/bind-dns/dns.keytab";
 		minimal-responses yes;
 
+{% if samba_dns_forward != "" %}
 		forwarders { {{ samba_dns_forward }}; };
+{% else %}
+		# forwarders {  };
+{% endif %}
 		allow-query { localnets; {{ samba_network }}; };
 		allow-recursion { localnets; {{ samba_network }}; };
+
+		dnssec-validation yes;
 
 		max-cache-ttl 86400;
 };
