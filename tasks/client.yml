@@ -18,6 +18,18 @@
     state: present
   when: samba_cl_packages | length > 0
 
+- name: install sssd client
+  apt_rpm:
+    pkg: "{{ samba_cl_packages_sssd }}"
+    state: present
+  when: samba_cl_packages_sssd | length > 0 and samba_client == "sssd"
+
+- name: install winbind client
+  apt_rpm:
+    pkg: "{{ samba_cl_packages_winbind }}"
+    state: present
+  when: samba_cl_packages_winbind | length > 0 and samba_client == "winbind"
+
 - name: wait for domain controller(s) to start up
   include_tasks: wait4master.yml
 
@@ -50,7 +62,8 @@
     {{ inventory_hostname_short }} \
     {{ samba_domain | upper }} \
     'Administrator' \
-    '{{ samba_admin_pass }}'
+    '{{ samba_admin_pass }}' \
+    '{{ "--winbind" if samba_client == "winbind" }}'
   when: not joined | bool or not samba_deploy_soft | bool
 
 - name: register node in localhost hostvars

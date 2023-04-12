@@ -13,6 +13,7 @@ samba_network: # 10.64.175.0/24 # need to determine which interface should be us
 samba_sites:
   #  main_site:
   #  subnet: # 10.64.175.0/24
+samba_client: sssd
 samba_deploy_soft: False
 
 samba_required_vars:
@@ -57,7 +58,11 @@ samba_cl_required_vars:
 
 samba_cl_packages:
   - samba-client
-  - sssd-ad
-  - task-auth-ad-sssd
   - sshpass
   - alterator-gpupdate
+
+samba_cl_packages_sssd:
+  - task-auth-ad-sssd
+
+samba_cl_packages_winbind:
+  - task-auth-ad-winbind
