@@ -30,12 +30,13 @@
     #    service: name=altlinux-openresolv state=started
     #    when: altlinux_openresolv_exists|bool and openresolv_install.changed|bool
 
+  ## TODO: fix samba restart on client
   - name: install samba DC common packages
     apt_rpm:
       pkg: "{{ samba_dc_common_packages }}"
       state: present
     when: (samba_dc_common_packages | length > 0) and samba_flavor != 'client'
-    notify: restart samba
+    #notify: restart samba
 
   - name: install samba-dc-mitkrb5 packages
     block:
@@ -65,7 +66,7 @@
     ansible.builtin.hostname:
       name: "{{ inventory_hostname_short }}.{{ samba_realm }}"
       use: systemd
-    notify: restart samba
+    #notify: restart samba
 
   - include: common.yml
   when: samba_flavor != 'gen_test_env'
