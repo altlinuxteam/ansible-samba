@@ -48,7 +48,7 @@
         pkg: "{{ samba_dc_mitkrb5_packages }}"
         state: present
       notify: restart samba
-    when: samba_dc_mitkrb5 | bool
+    when: (samba_dc_mitkrb5 | bool) and samba_flavor != 'client'
 
   - name: install samba-dc-heimdal packages
     block:
@@ -60,7 +60,7 @@
         pkg: "{{ samba_dc_heimdal_packages }}"
         state: present
       notify: restart samba
-    when: not samba_dc_mitkrb5 | bool
+    when: (not samba_dc_mitkrb5 | bool) and samba_flavor != 'client'
 
   - name: set hostname
     ansible.builtin.hostname:
