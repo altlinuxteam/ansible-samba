@@ -74,6 +74,26 @@
 -----------------------------------------------
 ### user replicaction ###
 
+## create user on mastr dc ##
+
+{% for item in create_user_status.stdout_lines if create_user_status is defined %}
+{{item}}
+{% else %}
+User already exist, trying connect with default pass:
+{% if check_user_status.stdout_lines|length %}
+    {% for item in check_user_status.stdout_lines %}
+{{item}}
+    {%endfor%}
+{% else %}
+    {% for item in check_user_status.stderr_lines %}
+{{item}}
+    {% endfor %}
+{% endif %}
+
+{% endfor %}
+
+## check existence user on another dc ##
+
 {% for item in replica_status.results if replica_status is defined %}
 ------------------|
 {{item.item}}    

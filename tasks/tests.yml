@@ -36,7 +36,7 @@
       register: get_control
 
     - name: set control ldap-reverse-dns-lookup
-      shell: control ldap-reverse-dns-lookup
+      shell: control ldap-reverse-dns-lookup deny && control ldap-reverse-dns-lookup
       register: set_control
       when: "get_control.stdout != 'deny'"
 
@@ -61,7 +61,7 @@
         timeout: 5
 
     - name: check user
-      shell: echo "{{ samba_admin_pass }}" | kinit test_user@{{samba_realm|upper}}
+      shell: echo {{ samba_admin_pass }} | kinit test_user@{{samba_realm|upper}}
       register: check_user_status
       ignore_errors: true
       when: "create_user_status.rc != 0"

@@ -98,5 +98,3 @@
 - name: generate test env vars
   include_tasks: generate_test_env_vars.yml
   when: samba_flavor == 'gen_test_env'
-
-
