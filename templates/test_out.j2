@@ -1,0 +1,98 @@
+{% for i in dc_names.stdout_lines %}
+{{ i }}
+{% endfor %}
+
+-----------------------------------------------
+### kinit status ###
+
+{% for item in kinit_result.stdout_lines if kinit_result.stdout_lines|length %}
+{{ item }}
+{% else %}
+{% for item in kinit_result.stderr_lines %}
+{{ item }}
+{% endfor %}
+{% endfor %}
+
+-----------------------------------------------
+### klist out ###
+
+{% for item in klist_result.stdout_lines if klist_result is defined %}
+{{ item }}
+{% endfor %}
+
+-----------------------------------------------
+### ldapsearch output ###
+
+{% for item in ldapsearch_result.results if ldapsearch_result is defined %}
+------------------|
+{{item.item}}    
+------------------|
+    {% if item.skipped is defined %}
+    skipped: {{item.skip_reason}}
+    {% endif %}
+
+    {% if item.stdout_lines is defined%}
+        {%if item.stdout_lines|length %}
+            {% for i in item.stdout_lines %}
+{{i}}
+            {% endfor %}
+        {% else %}
+            {% for i in item.stderr_lines %}
+{{i}}
+            {% endfor %}
+        {% endif %}
+    {% endif %}
+
+{% endfor %}
+
+-----------------------------------------------
+### smbclient output ###
+
+{% for item in smbclient_result.results if smbclient_result is defined %}
+------------------|
+{{item.item}}    
+------------------|
+    {% if item.skipped is defined %}
+    skipped: {{item.skip_reason}}
+    {% endif %}
+
+    {% if item.stdout_lines is defined%}
+        {%if item.stdout_lines|length %}
+            {% for i in item.stdout_lines %}
+{{i}}
+            {% endfor %}
+        {% else %}
+            {% for i in item.stderr_lines %}
+{{i}}
+            {% endfor %}
+        {% endif %}
+    {% endif %}
+
+{% endfor %}
+
+
+-----------------------------------------------
+### user replicaction ###
+
+{% for item in replica_status.results if replica_status is defined %}
+------------------|
+{{item.item}}    
+------------------|
+    {% if item.skipped is defined %}
+    skipped: {{item.skip_reason}}
+    {% endif %}
+
+    {% if item.stdout_lines is defined%}
+        {%if item.stdout_lines|length %}
+            {% for i in item.stdout_lines %}
+{{i}}
+            {% endfor %}
+        {% else %}
+            {% for i in item.stderr_lines %}
+{{i}}
+            {% endfor %}
+        {% endif %}
+    {% endif %}
+
+{% endfor %}
+-----------------------------------------------

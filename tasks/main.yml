@@ -91,6 +91,12 @@
   retries: 30
   delay: 1
 
+- name: test domain
+  include_tasks: tests.yml
+  when: samba_flavor == 'client'
+
 - name: generate test env vars
   include_tasks: generate_test_env_vars.yml
   when: samba_flavor == 'gen_test_env'
+
+

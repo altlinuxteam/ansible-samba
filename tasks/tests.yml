@@ -1,0 +1,91 @@
+---   
+- name: parsing dc ip and dc name
+  tags: pars_var
+  block:
+
+    - name: get dc ipv4
+      shell:  host "{{ samba_realm }}" | awk -v RS='([0-9]+\\.){3}[0-9]+' 'RT{print RT}'
+      register: dc_ip
+
+    - name: get dc names
+      shell: host -t srv _kerberos._udp."{{ samba_realm }}" | awk 'NF>1{print $NF}' 
+      register: dc_names 
+
+
+- name: get kerberos key
+  shell: echo {{samba_admin_pass}} | kinit administrator@{{samba_realm|upper}}
+  ignore_errors: true
+  register: kinit_result
+
+- name: get klist
+  shell: klist
+  ignore_errors: true
+  register: klist_result
+
+- name: check smbclient
+  shell: echo {{ samba_admin_pass }} | smbclient -L '{{ item }}' -U administrator
+  register: smbclient_result
+  ignore_errors: true
+  loop: '{{ dc_names.stdout_lines | sort }}'
+  
+- name: check ldapsearch
+  tags:  check_ldapsearch
+  block:
+    - name: get control ldap-reverse-dns-lookup
+      shell: control ldap-reverse-dns-lookup
+      register: get_control
+
+    - name: set control ldap-reverse-dns-lookup
+      shell: control ldap-reverse-dns-lookup
+      register: set_control
+      when: "get_control.stdout != 'deny'"
+
+    - name: ldapsearch
+      shell: ldapsearch -LLL -H ldap://{{ item }} -b "dc={{ (samba_realm).replace('.', ',dc=') }}" "(cn=administrator)" dn
+      register: ldapsearch_result
+      loop: "{{ dc_names.stdout_lines | sort }}"
+      ignore_errors: true
+      when: "get_control.stdout == 'deny' and kinit_result.rc == 0 or set_control.stdout == 'deny' and kinit_result.rc == 0"
+
+- name: check replication
+  tags: check_replica
+  block: 
+    - name: create user
+      shell: samba-tool user create test_user "{{ samba_admin_pass }}"
+      register: create_user_status
+      ignore_errors: true
+      delegate_to: "{{ samba_master_hostname }}"
+    
+    - name: Waiting for replication
+      wait_for:
+        timeout: 5
+
+    - name: check user
+      shell: echo "{{ samba_admin_pass }}" | kinit test_user@{{samba_realm|upper}}
+      register: check_user_status
+      ignore_errors: true
+      when: "create_user_status.rc != 0"
+
+    - name: check replication
+      shell: ldapsearch -LLL -H ldap://{{ item }} -b "dc={{ (samba_realm).replace('.', ',dc=') }}" "(cn=test_user)" dn
+      register: replica_status
+      ignore_errors: true
+      loop: "{{ dc_names.stdout_lines | sort }}"
+      when: "create_user_status.rc == 0 or check_user_status.rc == 0"
+
+    - name: delete user
+      shell: samba-tool user delete test_user
+      register: delete_user_status
+      ignore_errors: true
+      delegate_to: "{{ samba_master_hostname }}"
+      when: "create_user_status.rc == 0"
+
+- name: generate results
+  local_action: template src="test_out.j2" dest=".tmp/tests_out"
+  ignore_errors: true
+
+- name: clear kerberos key 
+  shell: kdestroy -A
+  ignore_errors: true
+
+              
