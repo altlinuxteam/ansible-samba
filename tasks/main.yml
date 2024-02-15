@@ -68,7 +68,7 @@
       use: systemd
     #notify: restart samba
 
-  - include: common.yml
+  - include_tasks: common.yml
   when: samba_flavor != 'gen_test_env'
 
 - name: deploy DC master

@@ -5,7 +5,7 @@
   with_items: "{{ samba_dc_replica_required_vars }}"
 
 - name: generate samba controller config files
-  include: dc_conf.yml
+  include_tasks: dc_conf.yml
 
 - name: generate smb.conf
   include_tasks: smb.conf.yml
